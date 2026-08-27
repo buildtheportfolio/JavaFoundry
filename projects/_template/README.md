@@ -1,0 +1,1 @@
+<h1>{{PROJECT_NAME}}</h1><p>{{DESCRIPTION}}</p><h2>Run</h2><pre>mvn spring-boot:run</pre><h2>Build</h2><pre>mvn clean package</pre>
