@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Number Guessing Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080b0f;--sur:#0d1117;--br:#1e2d3d;--g:#39d353;--gd:#1a6b28;--cy:#58a6ff;--am:#e3b341;--rd:#f85149;--pu:#bc8cff;--mu:#484f58;--tx:#c9d1d9;--txd:#6e7681}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh}
+    body::before{content:'';pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);z-index:99}
+    .wrap{max-width:720px;margin:0 auto;padding:44px 20px 80px}
+    nav a{color:var(--txd);font-size:11px;text-decoration:none;letter-spacing:.08em}
+    nav a:hover{color:var(--g)}
+    .badges{display:flex;gap:8px;margin:22px 0 12px;flex-wrap:wrap}
+    .badge{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border-radius:2px;border:1px solid}
+    .bj{color:var(--am);border-color:#4a3b1a;background:rgba(227,179,65,.06)}
+    .bb{color:var(--g);border-color:var(--gd);background:rgba(57,211,83,.06)}
+    .bo{color:var(--cy);border-color:#1f3d5c;background:rgba(88,166,255,.06)}
+    h1{font-size:26px;font-weight:700;color:#e6edf3;letter-spacing:-.02em}
+    .sub{color:var(--txd);font-size:12px;margin:6px 0 28px}
+    .lbl{font-size:10px;color:var(--txd);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+    .lbl::after{content:'';flex:1;height:1px;background:var(--br)}
+
+    .config{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:flex-end}
+    .cfg-group{display:flex;flex-direction:column;gap:4px}
+    .cfg-label{font-size:10px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase}
+    select,input[type=number]{background:var(--sur);border:1px solid var(--br);border-radius:4px;color:var(--tx);font-family:inherit;font-size:12px;padding:6px 10px;outline:none;caret-color:var(--g);transition:.15s;min-width:90px}
+    select:focus,input:focus{border-color:var(--gd)}
+    select{cursor:pointer}
+    .act{background:none;border:1px solid var(--br);border-radius:4px;color:var(--txd);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:7px 16px;cursor:pointer;transition:.15s}
+    .act:hover{color:var(--tx);border-color:var(--mu)}
+    .act.primary{color:var(--g);border-color:var(--gd)}
+    .act.danger{color:var(--rd);border-color:#5c1f1f}
+    .act:disabled{opacity:.35;cursor:not-allowed}
+
+    .game-card{background:var(--sur);border:1px solid var(--br);border-radius:6px;padding:20px;margin-bottom:20px}
+
+    .range-track{height:6px;background:var(--br);border-radius:3px;position:relative;margin:14px 0 6px}
+    .range-fill{position:absolute;height:6px;border-radius:3px;background:rgba(57,211,83,.25);transition:.3s}
+    .range-pin{position:absolute;top:-6px;width:2px;height:18px;border-radius:1px;transform:translateX(-50%)}
+    .range-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--mu)}
+
+    .guess-row{display:flex;gap:8px;margin:14px 0}
+    .guess-row input[type=number]{flex:1;font-size:18px;font-weight:700;text-align:center;padding:10px;background:var(--bg)}
+    .guess-row input::placeholder{font-size:13px;font-weight:400}
+
+    .hints{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:280px;overflow-y:auto}
+    .hint-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg);border:1px solid var(--br);border-radius:4px;font-size:12px;animation:fadein .2s ease}
+    @keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+    .hint-num{color:var(--mu);min-width:24px;font-size:10px}
+    .hint-guess{font-weight:700;min-width:40px;color:#e6edf3}
+    .hint-dir{font-weight:700;min-width:70px}
+    .hint-temp{min-width:110px}
+    .hint-range{color:var(--mu);font-size:11px}
+    .hint-ms{color:var(--mu);font-size:10px;margin-left:auto}
+
+    .guess-bar{display:flex;gap:4px;margin:12px 0}
+    .gb-cell{height:8px;flex:1;border-radius:2px;background:var(--br);transition:.3s}
+    .gb-cell.used{background:var(--g)}
+    .gb-cell.last{background:var(--am)}
+    .gb-cell.fail{background:var(--rd)}
+
+    .result{padding:14px 16px;border-radius:4px;margin-top:12px;display:none;font-weight:700;font-size:14px}
+    .result.win{background:rgba(57,211,83,.1);border:1px solid var(--gd);color:var(--g)}
+    .result.lose{background:rgba(248,81,73,.08);border:1px solid #5c1f1f;color:var(--rd)}
+
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:20px}
+    .stat-box{background:var(--sur);border:1px solid var(--br);border-radius:4px;padding:10px}
+    .stat-val{font-size:17px;font-weight:700;color:var(--g)}
+    .stat-lbl{font-size:10px;color:var(--mu);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+
+    .history{width:100%;border-collapse:collapse;font-size:12px}
+    .history th{color:var(--mu);font-weight:400;letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--br);text-align:left}
+    .history td{padding:7px 8px;border-bottom:1px solid rgba(30,45,61,.4)}
+    .history tr:last-child td{border:none}
+    .chip{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid;white-space:nowrap}
+    .cw{color:var(--g);border-color:var(--gd);background:rgba(57,211,83,.08)}
+    .cl{color:var(--rd);border-color:#5c1f1f;background:rgba(248,81,73,.06)}
+
+    pre.run{background:var(--sur);border:1px solid var(--br);border-radius:4px;padding:14px;font-size:12px;line-height:1.8;overflow-x:auto;white-space:pre-wrap}
+    .cmt{color:var(--mu)}.cmd{color:var(--g)}.out{color:var(--am)}
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Number Guessing Game</h1>
+  <p class="sub">Higher/lower hints · temperature warmth · streak tracking · efficiency rating</p>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="lbl">Configuration</div>
+  <div class="config">
+    <div class="cfg-group">
+      <span class="cfg-label">Difficulty</span>
+      <select id="diffSel" onchange="applyDiff()">
+        <option value="easy">Easy   1–50, 10g</option>
+        <option value="medium" selected>Medium 1–100, 7g</option>
+        <option value="hard">Hard   1–200, 6g</option>
+        <option value="insane">Insane 1–500, 8g</option>
+        <option value="custom">Custom…</option>
+      </select>
+    </div>
+    <div class="cfg-group" id="customFields" style="display:none;flex-direction:row;gap:8px">
+      <div class="cfg-group">
+        <span class="cfg-label">Min</span>
+        <input type="number" id="cMin" value="1" min="1" style="width:70px" oninput="applyCustom()">
+      </div>
+      <div class="cfg-group">
+        <span class="cfg-label">Max</span>
+        <input type="number" id="cMax" value="1000" min="2" style="width:90px" oninput="applyCustom()">
+      </div>
+      <div class="cfg-group">
+        <span class="cfg-label">Guesses</span>
+        <input type="number" id="cGuesses" value="10" min="1" style="width:70px" oninput="applyCustom()">
+      </div>
+    </div>
+    <div class="cfg-group">
+      <span class="cfg-label">Hints</span>
+      <select id="hintSel">
+        <option value="none">None</option>
+        <option value="basic">Basic</option>
+        <option value="rich" selected>Rich</option>
+        <option value="pct">Percentage</option>
+      </select>
+    </div>
+    <button class="act primary" id="newBtn" onclick="newRound()">▶ New Round</button>
+  </div>
+
+  <div class="lbl">Game</div>
+  <div class="game-card">
+    <div id="gameState" style="color:var(--mu);font-size:12px">Press "New Round" to start.</div>
+
+    <div id="gameActive" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        <div id="roundMeta" style="font-size:11px;color:var(--txd)"></div>
+        <div id="streakDisplay" style="font-size:11px;color:var(--am)"></div>
+      </div>
+
+      <div class="range-track" id="rangeTrack">
+        <div class="range-fill" id="rangeFill" style="left:0%;width:100%"></div>
+        <div class="range-pin" id="pinLo" style="background:var(--mu);left:0%"></div>
+        <div class="range-pin" id="pinHi" style="background:var(--mu);left:100%"></div>
+      </div>
+      <div class="range-labels">
+        <span id="loLabel"></span>
+        <span style="color:var(--txd);font-size:10px">possible range</span>
+        <span id="hiLabel"></span>
+      </div>
+
+      <div class="guess-bar" id="guessBar"></div>
+
+      <div class="guess-row">
+        <input type="number" id="guessInput" placeholder="Your guess…" onkeydown="if(event.key==='Enter')submitGuess()">
+        <button class="act primary" id="guessBtn" onclick="submitGuess()">Guess</button>
+        <button class="act" onclick="showBinaryHint()" title="Binary search hint">💡</button>
+      </div>
+
+      <div class="hints" id="hintsFeed"></div>
+
+      <div class="result" id="resultBanner"></div>
+    </div>
+  </div>
+
+  <div class="lbl">Session History</div>
+  <div style="overflow-x:auto;margin-bottom:24px">
+    <table class="history">
+      <thead><tr><th>#</th><th>Result</th><th>Target</th><th>Guesses</th><th>Difficulty</th><th>Time</th><th>Rating</th><th>Efficiency</th></tr></thead>
+      <tbody id="historyBody"><tr><td colspan="8" style="color:var(--mu);padding:12px">No rounds yet.</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="lbl">Compile &amp; Run</div>
+  <pre class="run"><span class="cmt"># compile</span>
+<span class="cmd">javac src/Main.java</span>
+
+<span class="cmt"># run</span>
+<span class="cmd">java -cp src Main</span>
+
+<span class="out">  ████████████████████████████████████████████
+  ██  NUMBER GUESSING GAME  ██
+  ████████████████████████████████████████████
+
+  ┌──────── MENU ──────────────────────────────────────┐
+  │  1. Play         current: Medium (1–100, 7 guesses)
+  │  2. Difficulty   3. Hints [RICH]   4. Timer [ON]
+  │  5. Stats        6. Toggle history   7. Quit
+  └────────────────────────────────────────────────────┘
+
+  [1/7] Guess: 50
+  ↑ Higher  |  ~ Warm  |  narrowed: [51–100]
+  [2/7] Guess: 75
+  ↓ Lower   |  🔥 Scorching  |  narrowed: [51–74]</span></pre>
+</div>
+
+<script>
+const DIFFS = {
+  easy:   {min:1, max:50,  guesses:10, label:'Easy'},
+  medium: {min:1, max:100, guesses:7,  label:'Medium'},
+  hard:   {min:1, max:200, guesses:6,  label:'Hard'},
+  insane: {min:1, max:500, guesses:8,  label:'Insane'},
+  custom: {min:1, max:100, guesses:7,  label:'Custom'},
+};
+
+const session = {
+  totalRounds:   0,
+  wins:          0,
+  losses:        0,
+  bestScore:     Infinity,
+  bestTimeMs:    Infinity,
+  totalGuesses:  0,
+  totalMs:       0,
+  currentStreak: 0,
+  bestStreak:    0,
+  history:       [],
+};
+
+let round = null;
+
+let cfg = { min:1, max:100, guesses:7, label:'Medium', hintMode:'rich' };
+
+function applyDiff() {
+  const val = document.getElementById('diffSel').value;
+  document.getElementById('customFields').style.display = val === 'custom' ? 'flex' : 'none';
+  if (val !== 'custom') {
+    const d = DIFFS[val];
+    cfg.min = d.min; cfg.max = d.max; cfg.guesses = d.guesses; cfg.label = d.label;
+  } else {
+    applyCustom();
+  }
+}
+
+function applyCustom() {
+  cfg.min     = parseInt(document.getElementById('cMin').value)     || 1;
+  cfg.max     = parseInt(document.getElementById('cMax').value)     || 100;
+  cfg.guesses = parseInt(document.getElementById('cGuesses').value) || 7;
+  cfg.label   = 'Custom';
+}
+
+function randInt(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo; }
+function optimalGuesses(lo, hi) { return Math.ceil(Math.log2(hi - lo + 1)); }
+
+function efficiency(used, lo, hi) {
+  const opt = optimalGuesses(lo, hi);
+  return Math.min(100, opt / used * 100);
+}
+
+function rating(won, used, lo, hi) {
+  if (!won) return 'DNF';
+  const eff = efficiency(used, lo, hi);
+  if (eff >= 100) return 'PERFECT';
+  if (eff >=  85) return 'GREAT';
+  if (eff >=  70) return 'GOOD';
+  if (eff >=  55) return 'OK';
+  return 'POOR';
+}
+
+function ratingColor(r) {
+  return {PERFECT:'var(--pu)',GREAT:'var(--g)',GOOD:'var(--cy)',OK:'var(--am)',DNF:'var(--rd)',POOR:'var(--rd)'}[r] || 'var(--tx)';
+}
+
+function warmth(diff, range) {
+  const r = range;
+  if (diff === 0)         return {label:'✓ Correct!',    col:'var(--g)'};
+  if (diff <= r / 10)    return {label:'🔥 Scorching',   col:'#ff4500'};
+  if (diff <= r / 5)     return {label:'♨ Hot',          col:'var(--rd)'};
+  if (diff <= r / 3)     return {label:'~ Warm',         col:'var(--am)'};
+  if (diff <= r / 2)     return {label:'Cool',           col:'var(--cy)'};
+  return                         {label:'❄ Ice cold',    col:'#7ec8e3'};
+}
+
+function buildHint(guess, secret, lo, hi, mode) {
+  const diff  = Math.abs(guess - secret);
+  const range = hi - lo;
+  const dir   = guess < secret ? '↑ Higher' : '↓ Lower';
+  const dirCol= guess < secret ? 'var(--g)' : 'var(--rd)';
+  const w     = warmth(diff, range);
+
+  if (mode === 'none') return {dir, dirCol, temp:'', tempCol:'var(--tx)', extra:''};
+
+  if (mode === 'pct') {
+    const pct = Math.round(100 - diff / range * 100);
+    return {dir, dirCol, temp: w.label, tempCol: w.col, extra: `${pct}% close`};
+  }
+
+  return {dir, dirCol, temp: w.label, tempCol: w.col, extra:''};
+}
+
+function narrowedRange(guesses, secret, min, max) {
+  let lo = min, hi = max;
+  for (const g of guesses) {
+    if (g < secret && g >= lo) lo = g + 1;
+    if (g > secret && g <= hi) hi = g - 1;
+  }
+  return {lo, hi};
+}
+
+function newRound() {
+  cfg.hintMode = document.getElementById('hintSel').value;
+  applyDiff();
+
+  round = {
+    secret:    randInt(cfg.min, cfg.max),
+    min:       cfg.min,
+    max:       cfg.max,
+    maxGuesses:cfg.guesses,
+    label:     cfg.label,
+    hintMode:  cfg.hintMode,
+    guesses:   [],
+    guessedNums:[],
+    startMs:   Date.now(),
+    over:      false,
+    won:       false,
+    loRange:   cfg.min,
+    hiRange:   cfg.max,
+  };
+
+  document.getElementById('gameState').style.display = 'none';
+  document.getElementById('gameActive').style.display = 'block';
+  document.getElementById('resultBanner').style.display = 'none';
+  document.getElementById('hintsFeed').innerHTML = '';
+  document.getElementById('guessInput').value = '';
+  document.getElementById('guessInput').disabled = false;
+  document.getElementById('guessBtn').disabled = false;
+  document.getElementById('guessInput').focus();
+
+  const opt = optimalGuesses(round.min, round.max);
+  document.getElementById('roundMeta').innerHTML =
+    `Range: <b style="color:#e6edf3">${round.min}–${round.max}</b> &nbsp;·&nbsp; ` +
+    `Max: <b style="color:#e6edf3">${round.maxGuesses}</b> guesses &nbsp;·&nbsp; ` +
+    `Optimal: <span style="color:var(--pu)">${opt}</span> (binary search)`;
+
+  updateStreakDisplay();
+  renderGuessBar();
+  updateRangeVisualiser(round.min, round.max, round.min, round.max);
+  renderStats();
+}
+
+function submitGuess() {
+  if (!round || round.over) return;
+  const input = document.getElementById('guessInput');
+  const guess = parseInt(input.value);
+
+  if (isNaN(guess) || guess < round.min || guess > round.max) {
+    flashInput(input, 'var(--rd)');
+    return;
+  }
+  if (round.guessedNums.includes(guess)) {
+    flashInput(input, 'var(--am)');
+    return;
+  }
+
+  const now    = Date.now();
+  const ms     = now - round.startMs;
+  round.guesses.push({guess, ms});
+  round.guessedNums.push(guess);
+  input.value  = '';
+
+  const hintMode = round.hintMode;
+  const h        = buildHint(guess, round.secret, round.min, round.max, hintMode);
+  const {lo, hi} = narrowedRange(round.guessedNums, round.secret, round.min, round.max);
+
+  if (hintMode === 'rich') {
+    round.loRange = lo;
+    round.hiRange = hi;
+    updateRangeVisualiser(round.min, round.max, lo, hi);
+  }
+
+  const extraText = hintMode === 'rich'
+    ? `[${lo}–${hi}]`
+    : (h.extra || '');
+
+  addHintRow(round.guesses.length, guess, h, extraText, ms);
+  renderGuessBar();
+
+  if (guess === round.secret) {
+    endRound(true, now);
+  } else if (round.guesses.length >= round.maxGuesses) {
+    endRound(false, now);
+  }
+}
+
+function endRound(won, now) {
+  round.over = true;
+  round.won  = won;
+  const elapsed = now - round.startMs;
+  const used    = round.guesses.length;
+  const r       = rating(won, used, round.min, round.max);
+  const eff     = won ? efficiency(used, round.min, round.max) : 0;
+
+  document.getElementById('guessInput').disabled = true;
+  document.getElementById('guessBtn').disabled   = true;
+
+  const banner = document.getElementById('resultBanner');
+  if (won) {
+    banner.className = 'result win';
+    banner.innerHTML =
+      `✓ Correct! The number was <b>${round.secret}</b>.` +
+      ` &nbsp;·&nbsp; ${used}/${round.maxGuesses} guesses` +
+      ` &nbsp;·&nbsp; ${elapsed}ms` +
+      ` &nbsp;·&nbsp; <span style="color:${ratingColor(r)}">${r}</span>` +
+      ` &nbsp;·&nbsp; ${eff.toFixed(0)}% efficient`;
+  } else {
+    banner.className = 'result lose';
+    banner.innerHTML = `✗ Out of guesses. The number was <b>${round.secret}</b>.`;
+  }
+  banner.style.display = 'block';
+
+  const rec = {
+    won, target: round.secret, used, elapsed,
+    min: round.min, max: round.max,
+    maxGuesses: round.maxGuesses,
+    label: round.label, r, eff,
+    roundNum: session.totalRounds + 1,
+  };
+
+  session.totalRounds++;
+  session.totalGuesses += used;
+  session.totalMs      += elapsed;
+  if (won) {
+    session.wins++;
+    session.currentStreak++;
+    session.bestStreak  = Math.max(session.bestStreak, session.currentStreak);
+    session.bestScore   = Math.min(session.bestScore, used);
+    session.bestTimeMs  = Math.min(session.bestTimeMs, elapsed);
+  } else {
+    session.losses++;
+    session.currentStreak = 0;
+  }
+  session.history.push(rec);
+
+  updateStreakDisplay();
+  renderStats();
+  renderHistory();
+}
+
+function showBinaryHint() {
+  if (!round || round.over) return;
+  const {lo, hi} = narrowedRange(round.guessedNums, round.secret, round.min, round.max);
+  const mid = Math.floor((lo + hi) / 2);
+  const feed = document.getElementById('hintsFeed');
+  const el = document.createElement('div');
+  el.className = 'hint-row';
+  el.style.borderColor = 'var(--pu)';
+  el.innerHTML = `<span style="color:var(--pu)">💡 Binary hint: remaining [${lo}–${hi}], try around <b>${mid}</b></span>`;
+  feed.prepend(el);
+}
+
+function addHintRow(n, guess, h, extra, ms) {
+  const feed = document.getElementById('hintsFeed');
+  const el   = document.createElement('div');
+  el.className = 'hint-row';
+  el.innerHTML = `
+    <span class="hint-num">#${n}</span>
+    <span class="hint-guess">${guess}</span>
+    <span class="hint-dir" style="color:${h.dirCol}">${h.dir}</span>
+    ${h.temp ? `<span class="hint-temp" style="color:${h.tempCol}">${h.temp}</span>` : '<span class="hint-temp"></span>'}
+    ${extra   ? `<span class="hint-range">${extra}</span>` : ''}
+    <span class="hint-ms">${ms}ms</span>`;
+  feed.prepend(el);
+}
+
+function renderGuessBar() {
+  if (!round) return;
+  const bar  = document.getElementById('guessBar');
+  const used = round.guesses.length;
+  const max  = round.maxGuesses;
+  bar.innerHTML = Array.from({length: max}, (_,i) => {
+    let cls = 'gb-cell';
+    if (i < used - 1) cls += round.won && i === used - 1 ? ' last' : ' used';
+    else if (i === used - 1) cls += round.won ? ' last' : round.over ? ' fail' : ' used';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function updateRangeVisualiser(min, max, lo, hi) {
+  const total  = max - min;
+  const leftPct  = total === 0 ? 0 : ((lo - min) / total) * 100;
+  const widthPct = total === 0 ? 100 : ((hi - lo) / total) * 100;
+  document.getElementById('rangeFill').style.left  = leftPct + '%';
+  document.getElementById('rangeFill').style.width = widthPct + '%';
+  document.getElementById('pinLo').style.left = leftPct + '%';
+  document.getElementById('pinHi').style.left = (leftPct + widthPct) + '%';
+  document.getElementById('loLabel').textContent = lo;
+  document.getElementById('hiLabel').textContent = hi;
+}
+
+function flashInput(el, color) {
+  el.style.borderColor = color;
+  setTimeout(()=>{ el.style.borderColor=''; }, 600);
+}
+
+function updateStreakDisplay() {
+  const el = document.getElementById('streakDisplay');
+  if (!el) return;
+  const s = session.currentStreak;
+  el.textContent = s > 1 ? `🔥 ${s} win streak` : '';
+}
+
+function renderStats() {
+  const s     = session;
+  const wr    = s.totalRounds ? (s.wins / s.totalRounds * 100).toFixed(0) : 0;
+  const avg   = s.totalRounds ? (s.totalGuesses / s.totalRounds).toFixed(1) : '—';
+  const best  = s.bestScore === Infinity ? '—' : s.bestScore;
+  const bTime = s.bestTimeMs === Infinity ? '—' : s.bestTimeMs + 'ms';
+
+  document.getElementById('statsRow').innerHTML = [
+    {val: s.totalRounds,        lbl: 'Rounds'},
+    {val: `${s.wins}W / ${s.losses}L`, lbl: 'Record'},
+    {val: wr + '%',             lbl: 'Win Rate'},
+    {val: best,                 lbl: 'Best Score'},
+    {val: avg,                  lbl: 'Avg Guesses'},
+    {val: s.bestStreak || '—',  lbl: 'Best Streak'},
+  ].map(x=>`<div class="stat-box"><div class="stat-val">${x.val}</div><div class="stat-lbl">${x.lbl}</div></div>`).join('');
+}
+
+function renderHistory() {
+  const body = document.getElementById('historyBody');
+  if (!session.history.length) {
+    body.innerHTML = '<tr><td colspan="8" style="color:var(--mu);padding:12px">No rounds yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = [...session.history].reverse().map(r => `
+    <tr>
+      <td style="color:var(--mu)">${r.roundNum}</td>
+      <td><span class="chip ${r.won?'cw':'cl'}">${r.won?'WIN':'LOSS'}</span></td>
+      <td style="color:#e6edf3;font-weight:700">${r.target}</td>
+      <td>${r.used} / ${r.maxGuesses}</td>
+      <td style="color:var(--txd)">${r.label} (${r.min}–${r.max})</td>
+      <td style="color:var(--mu)">${r.elapsed}ms</td>
+      <td style="color:${ratingColor(r.r)}">${r.r}</td>
+      <td style="color:var(--txd)">${r.won ? r.eff.toFixed(0)+'%' : '—'}</td>
+    </tr>`).join('');
+}
+
+renderStats();
+renderHistory();
+</script>
+</body>
+</html>

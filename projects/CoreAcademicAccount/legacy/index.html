@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Grade Tracker — Java 120</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #080b0f;
+        --sur: #0d1117;
+        --br: #1e2d3d;
+        --g: #39d353;
+        --gd: #1a6b28;
+        --cy: #58a6ff;
+        --am: #e3b341;
+        --rd: #f85149;
+        --pu: #bc8cff;
+        --mu: #484f58;
+        --tx: #c9d1d9;
+        --txd: #6e7681;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--tx);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        min-height: 100vh;
+      }
+      body::before {
+        content: "";
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.07) 2px,
+          rgba(0, 0, 0, 0.07) 4px
+        );
+        z-index: 99;
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 44px 20px 80px;
+      }
+      nav a {
+        color: var(--txd);
+        font-size: 11px;
+        text-decoration: none;
+        letter-spacing: 0.08em;
+      }
+      nav a:hover {
+        color: var(--g);
+      }
+      .badges {
+        display: flex;
+        gap: 8px;
+        margin: 22px 0 12px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 2px;
+        border: 1px solid;
+      }
+      .bj {
+        color: var(--am);
+        border-color: #4a3b1a;
+        background: rgba(227, 179, 65, 0.06);
+      }
+      .bb {
+        color: var(--g);
+        border-color: var(--gd);
+        background: rgba(57, 211, 83, 0.06);
+      }
+      .bo {
+        color: var(--cy);
+        border-color: #1f3d5c;
+        background: rgba(88, 166, 255, 0.06);
+      }
+      h1 {
+        font-size: 26px;
+        font-weight: 700;
+        color: #e6edf3;
+        letter-spacing: -0.02em;
+      }
+      .sub {
+        color: var(--txd);
+        font-size: 12px;
+        margin: 6px 0 28px;
+      }
+      .lbl {
+        font-size: 10px;
+        color: var(--txd);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .lbl::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--br);
+      }
+      .card {
+        background: var(--sur);
+        border: 1px solid var(--br);
+        border-radius: 6px;
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+
+      /* toolbar */
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        align-items: center;
+      }
+      .act {
+        background: none;
+        border: 1px solid var(--br);
+        border-radius: 4px;
+        color: var(--txd);
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .act:hover {
+        color: var(--tx);
+        border-color: var(--mu);
+      }
+      .act.primary {
+        color: var(--g);
+        border-color: var(--gd);
+      }
+      .act.danger {
+        color: var(--rd);
+        border-color: #5c1f1f;
+      }
+      input[type="text"],
+      input[type="number"],
+      select {
+        background: var(--bg);
+        border: 1px solid var(--br);
+        border-radius: 4px;
+        color: var(--tx);
+        font-family: inherit;
+        font-size: 12px;
+        padding: 6px 10px;
+        outline: none;
+        caret-color: var(--g);
+        transition: 0.15s;
+      }
+      input:focus,
+      select:focus {
+        border-color: var(--gd);
+      }
+      select {
+        cursor: pointer;
+      }
+
+      /* roster table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      th {
+        color: var(--mu);
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--br);
+        text-align: left;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+      }
+      th:hover {
+        color: var(--tx);
+      }
+      td {
+        padding: 8px 10px;
+        border-bottom: 1px solid rgba(30, 45, 61, 0.5);
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border: none;
+      }
+      tr.sel td {
+        background: rgba(57, 211, 83, 0.04);
+      }
+      .gpa-bar {
+        height: 4px;
+        background: var(--br);
+        border-radius: 2px;
+        margin-top: 4px;
+        width: 100%;
+        max-width: 100px;
+      }
+      .gpa-fill {
+        height: 4px;
+        border-radius: 2px;
+        transition: 0.4s;
+      }
+
+      /* standing chips */
+      .chip {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border-radius: 2px;
+        border: 1px solid;
+        white-space: nowrap;
+      }
+      .ch-HONORS {
+        color: var(--g);
+        border-color: var(--gd);
+        background: rgba(57, 211, 83, 0.08);
+      }
+      .ch-GOOD {
+        color: var(--cy);
+        border-color: #1f3d5c;
+        background: rgba(88, 166, 255, 0.06);
+      }
+      .ch-SATISFACTORY {
+        color: var(--am);
+        border-color: #4a3b1a;
+        background: rgba(227, 179, 65, 0.06);
+      }
+      .ch-WARNING {
+        color: #ff9500;
+        border-color: #5c3b00;
+        background: rgba(255, 149, 0, 0.06);
+      }
+      .ch-PROBATION {
+        color: var(--rd);
+        border-color: #5c1f1f;
+        background: rgba(248, 81, 73, 0.06);
+      }
+
+      /* detail panel */
+      .detail {
+        background: var(--bg);
+        border: 1px solid var(--br);
+        border-radius: 4px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .d-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: #e6edf3;
+      }
+      .d-meta {
+        font-size: 11px;
+        color: var(--mu);
+        margin-top: 3px;
+      }
+      .d-gpa {
+        text-align: right;
+      }
+      .d-pct {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--g);
+      }
+      .d-sub {
+        font-size: 11px;
+        color: var(--mu);
+      }
+      .subj-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+      }
+      .subj-card {
+        background: var(--sur);
+        border: 1px solid var(--br);
+        border-radius: 4px;
+        padding: 10px;
+      }
+      .subj-name {
+        font-size: 11px;
+        color: var(--txd);
+        margin-bottom: 4px;
+      }
+      .subj-avg {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .subj-meta {
+        font-size: 10px;
+        color: var(--mu);
+        margin-top: 2px;
+      }
+      .bar-track {
+        height: 3px;
+        background: var(--br);
+        border-radius: 2px;
+        margin-top: 6px;
+      }
+      .bar-fill {
+        height: 3px;
+        border-radius: 2px;
+      }
+
+      /* add-grade panel */
+      .grade-form {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--br);
+      }
+
+      /* stats row */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .stat-box {
+        background: var(--bg);
+        border: 1px solid var(--br);
+        border-radius: 4px;
+        padding: 10px;
+      }
+      .stat-val {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--g);
+      }
+      .stat-lbl {
+        font-size: 10px;
+        color: var(--mu);
+        margin-top: 2px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      /* run it */
+      pre.run {
+        background: var(--bg);
+        border: 1px solid var(--br);
+        border-radius: 4px;
+        padding: 14px;
+        font-size: 12px;
+        line-height: 1.8;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+      .cmt {
+        color: var(--mu);
+      }
+      .cmd {
+        color: var(--g);
+      }
+      .out {
+        color: var(--am);
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--br);
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Student Grade Tracker</h1>
+      <p class="sub">
+        Weighted GPA · letter grades · class ranking · per-subject stats
+      </p>
+
+      <div class="stats-row" id="statsRow"></div>
+
+      <div class="lbl">Class Roster</div>
+      <div class="card" style="padding: 14px">
+        <div class="toolbar">
+          <button class="act primary" onclick="openAddStudent()">
+            + Student
+          </button>
+          <select id="sortSel" onchange="render()">
+            <option value="gpa">Sort: GPA ↓</option>
+            <option value="name">Sort: Name A–Z</option>
+            <option value="year">Sort: Year</option>
+          </select>
+          <input
+            type="text"
+            id="search"
+            placeholder="Search name…"
+            oninput="render()"
+            style="width: 150px"
+          />
+        </div>
+        <div style="overflow-x: auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Year</th>
+                <th>Weighted GPA</th>
+                <th>Letter</th>
+                <th>Standing</th>
+                <th>Credits</th>
+              </tr>
+            </thead>
+            <tbody id="rosterBody"></tbody>
+          </table>
+        </div>
+        <div class="detail" id="detail" style="display: none"></div>
+      </div>
+
+      <div class="lbl">Compile &amp; Run</div>
+      <pre class="run"><span class="cmt"># compile all Java files</span>
+<span class="cmd">javac src/*.java</span>
+
+<span class="cmt"># run full demo (8 sections)</span>
+<span class="cmd">java -cp src Main</span>
+
+<span class="out">── 3. Class Ranking — sorted by weighted GPA desc, name asc ──────
+  #1   S007   Grace Lee            Senior        94.84%    3.97   A+     HONORS    🥇
+  #2   S001   Alice Chen           Junior        86.03%    3.60   A      HONORS    🥈
+  #3   S005   Eva Rodriguez        Junior        83.87%    3.38   A-     GOOD      🥉
+  ...
+
+── 7. Weighted GPA vs Simple Average — why weighting matters ─────
+  Student              Simple Avg    Weighted GPA    Δ Diff
+  Carol Smith            70.90%         68.42%       -2.48 ↓
+  David Kim              71.30%         67.03%       -4.27 ↓</span></pre>
+    </div>
+
+    <script>
+      const SUBJECTS = [
+        { name: "Mathematics", credits: 4 },
+        { name: "Physics", credits: 4 },
+        { name: "Chemistry", credits: 3 },
+        { name: "English", credits: 3 },
+        { name: "Computer Sci", credits: 4 },
+        { name: "History", credits: 2 },
+        { name: "Biology", credits: 3 },
+        { name: "Economics", credits: 3 },
+        { name: "Statistics", credits: 3 },
+        { name: "Literature", credits: 2 },
+      ];
+
+      function makeStudent(id, name, year, gradeRows) {
+        const subjects = SUBJECTS.map((s, i) => ({
+          ...s,
+          scores: gradeRows[i] !== undefined ? [gradeRows[i]] : [],
+        }));
+        return { id, name, year, subjects };
+      }
+
+      function avg(scores) {
+        return scores.length
+          ? scores.reduce((a, b) => a + b, 0) / scores.length
+          : 0;
+      }
+
+      function weightedGPA(student) {
+        let pts = 0,
+          cr = 0;
+        for (const s of student.subjects) {
+          if (!s.scores.length) continue;
+          pts += avg(s.scores) * s.credits;
+          cr += s.credits;
+        }
+        return cr ? pts / cr : 0;
+      }
+
+      function simpleAvg(student) {
+        const avgs = student.subjects
+          .filter((s) => s.scores.length)
+          .map((s) => avg(s.scores));
+        return avgs.length ? avgs.reduce((a, b) => a + b, 0) / avgs.length : 0;
+      }
+
+      function letterGrade(pct) {
+        if (pct >= 90) return "A+";
+        if (pct >= 85) return "A";
+        if (pct >= 80) return "A-";
+        if (pct >= 75) return "B+";
+        if (pct >= 70) return "B";
+        if (pct >= 65) return "B-";
+        if (pct >= 60) return "C+";
+        if (pct >= 55) return "C";
+        if (pct >= 50) return "C-";
+        if (pct >= 45) return "D";
+        return "F";
+      }
+
+      function standing(pct) {
+        if (pct >= 85) return "HONORS";
+        if (pct >= 70) return "GOOD";
+        if (pct >= 55) return "SATISFACTORY";
+        if (pct >= 40) return "WARNING";
+        return "PROBATION";
+      }
+
+      function gpa4(pct) {
+        if (pct >= 90) return 4.0;
+        if (pct >= 80) return 3.0 + (pct - 80) / 10;
+        if (pct >= 70) return 2.0 + (pct - 70) / 10;
+        if (pct >= 60) return 1.0 + (pct - 60) / 10;
+        return Math.max(0, pct / 60);
+      }
+
+      function gpaColor(pct) {
+        if (pct >= 85) return "var(--g)";
+        if (pct >= 70) return "var(--cy)";
+        if (pct >= 55) return "var(--am)";
+        if (pct >= 40) return "#ff9500";
+        return "var(--rd)";
+      }
+
+      function yearLabel(y) {
+        return (
+          ["", "Freshman", "Sophomore", "Junior", "Senior"][y] || `Year ${y}`
+        );
+      }
+
+      function earnedCredits(student) {
+        return student.subjects
+          .filter((s) => s.scores.length && avg(s.scores) >= 40)
+          .reduce((a, s) => a + s.credits, 0);
+      }
+      function totalCredits(student) {
+        return student.subjects
+          .filter((s) => s.scores.length)
+          .reduce((a, s) => a + s.credits, 0);
+      }
+
+      let students = [
+        makeStudent(
+          "S001",
+          "Alice Chen",
+          3,
+          [88, 92, 79, 85, 95, 70, 82, 88, 91, 76],
+        ),
+        makeStudent(
+          "S002",
+          "Bob Patel",
+          2,
+          [72, 68, 75, 80, 70, 65, 71, 74, 69, 77],
+        ),
+        makeStudent(
+          "S003",
+          "Carol Smith",
+          4,
+          [55, 60, 58, 91, 62, 94, 61, 70, 65, 95],
+        ),
+        makeStudent(
+          "S004",
+          "David Kim",
+          1,
+          [45, 82, 90, 78, 88, 55, 0, 72, 84, 68],
+        ),
+        makeStudent(
+          "S005",
+          "Eva Rodriguez",
+          3,
+          [83, 87, 80, 88, 85, 79, 84, 86, 82, 81],
+        ),
+        makeStudent(
+          "S006",
+          "Frank Johnson",
+          2,
+          [38, 42, 35, 50, 40, 55, 45, 38, 41, 48],
+        ),
+        makeStudent(
+          "S007",
+          "Grace Lee",
+          4,
+          [96, 94, 91, 98, 99, 89, 93, 95, 97, 92],
+        ),
+        makeStudent(
+          "S008",
+          "Hiro Tanaka",
+          1,
+          [76, 80, 74, 77, 83, 69, 78, 75, 81, 72],
+        ),
+      ];
+
+      let selectedId = null;
+
+      function renderStats() {
+        const gpas = students.map(weightedGPA);
+        const avg_ = gpas.reduce((a, b) => a + b, 0) / gpas.length;
+        const honors = students.filter(
+          (s) => standing(weightedGPA(s)) === "HONORS",
+        ).length;
+        const prob = students.filter(
+          (s) => standing(weightedGPA(s)) === "PROBATION",
+        ).length;
+        const top = students.reduce((a, b) =>
+          weightedGPA(a) > weightedGPA(b) ? a : b,
+        );
+        document.getElementById("statsRow").innerHTML = [
+          { val: students.length, lbl: "Students" },
+          { val: avg_.toFixed(1) + "%", lbl: "Class Avg GPA" },
+          { val: honors, lbl: "Honor Roll" },
+          { val: prob, lbl: "Probation" },
+          { val: top.name.split(" ")[0], lbl: "Top Student" },
+        ]
+          .map(
+            (s) =>
+              `<div class="stat-box"><div class="stat-val">${s.val}</div><div class="stat-lbl">${s.lbl}</div></div>`,
+          )
+          .join("");
+      }
+
+      function render() {
+        renderStats();
+        const q = document.getElementById("search").value.toLowerCase();
+        const srt = document.getElementById("sortSel").value;
+        let list = students.filter((s) => s.name.toLowerCase().includes(q));
+        if (srt === "gpa") list.sort((a, b) => weightedGPA(b) - weightedGPA(a));
+        if (srt === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+        if (srt === "year")
+          list.sort(
+            (a, b) => a.year - b.year || weightedGPA(b) - weightedGPA(a),
+          );
+
+        const body = document.getElementById("rosterBody");
+        body.innerHTML = list
+          .map((s, i) => {
+            const gpa = weightedGPA(s);
+            const col = gpaColor(gpa);
+            const st = standing(gpa);
+            const sel = s.id === selectedId;
+            return `<tr class="${sel ? "sel" : ""}" onclick="selectStudent('${s.id}')" style="cursor:pointer">
+      <td style="color:var(--mu)">${i + 1}</td>
+      <td style="font-weight:700;color:#e6edf3">${s.name}</td>
+      <td style="color:var(--mu)">${s.id}</td>
+      <td style="color:var(--txd)">${yearLabel(s.year)}</td>
+      <td>
+        <span style="color:${col};font-weight:700">${gpa.toFixed(2)}%</span>
+        <div class="gpa-bar"><div class="gpa-fill" style="width:${gpa}%;background:${col}"></div></div>
+      </td>
+      <td style="color:${col}">${letterGrade(gpa)}</td>
+      <td><span class="chip ch-${st}">${st}</span></td>
+      <td style="color:var(--txd)">${earnedCredits(s)}/${totalCredits(s)}</td>
+    </tr>`;
+          })
+          .join("");
+
+        const detail = document.getElementById("detail");
+        if (!selectedId) {
+          detail.style.display = "none";
+          return;
+        }
+        const s = students.find((x) => x.id === selectedId);
+        if (!s) {
+          detail.style.display = "none";
+          return;
+        }
+        const gpa = weightedGPA(s);
+        const col = gpaColor(gpa);
+        const smpl = simpleAvg(s);
+        const diff = gpa - smpl;
+
+        detail.style.display = "block";
+        detail.innerHTML = `
+    <div class="detail-header">
+      <div>
+        <div class="d-name">${s.name}</div>
+        <div class="d-meta">${yearLabel(s.year)} · ID: ${s.id} · <span class="chip ch-${standing(gpa)}">${standing(gpa)}</span></div>
+        <div class="d-meta" style="margin-top:6px">
+          Weighted GPA: <b style="color:${col}">${gpa.toFixed(2)}%</b>
+          &nbsp;·&nbsp; Simple avg: <b>${smpl.toFixed(2)}%</b>
+          &nbsp;·&nbsp; Δ <b style="color:${diff >= 0 ? "var(--g)" : "var(--rd)"}">${diff > 0 ? "+" : ""}${diff.toFixed(2)}%</b>
+        </div>
+      </div>
+      <div class="d-gpa">
+        <div class="d-pct" style="color:${col}">${gpa.toFixed(1)}%</div>
+        <div class="d-sub">${gpa4(gpa).toFixed(2)} / 4.0 GPA</div>
+        <div class="d-sub">${letterGrade(gpa)}</div>
+      </div>
+    </div>
+    <div class="subj-grid">${s.subjects
+      .map((sub) => {
+        const a = avg(sub.scores);
+        const c = gpaColor(a);
+        const hasSc = sub.scores.length > 0;
+        return `<div class="subj-card">
+        <div class="subj-name">${sub.name} <span style="color:var(--mu)">${sub.credits}cr</span></div>
+        <div class="subj-avg" style="color:${hasSc ? c : "var(--mu)"}">${hasSc ? a.toFixed(1) + "%" : "—"}</div>
+        <div class="subj-meta">${hasSc ? letterGrade(a) + " · " + sub.credits + "cr weight" : ""}</div>
+        ${hasSc ? `<div class="bar-track"><div class="bar-fill" style="width:${a}%;background:${c}"></div></div>` : ""}
+      </div>`;
+      })
+      .join("")}</div>
+    <div class="grade-form">
+      <select id="gSubj">${s.subjects.map((sub) => `<option>${sub.name}</option>`).join("")}</select>
+      <input type="number" id="gScore" placeholder="Score 0–100" min="0" max="100" style="width:140px">
+      <button class="act primary" onclick="addGrade('${s.id}')">Add Grade</button>
+      <button class="act danger"  onclick="removeStudent('${s.id}')">Remove Student</button>
+    </div>`;
+      }
+
+      function selectStudent(id) {
+        selectedId = selectedId === id ? null : id;
+        render();
+      }
+
+      function addGrade(id) {
+        const s = students.find((x) => x.id === id);
+        const subj = document.getElementById("gSubj").value;
+        const score = parseFloat(document.getElementById("gScore").value);
+        if (isNaN(score) || score < 0 || score > 100) {
+          alert("Score must be 0–100.");
+          return;
+        }
+        const sub = s.subjects.find((x) => x.name === subj);
+        sub.scores.push(score);
+        render();
+      }
+
+      function removeStudent(id) {
+        if (!confirm("Remove this student?")) return;
+        students = students.filter((s) => s.id !== id);
+        selectedId = null;
+        render();
+      }
+
+      function openAddStudent() {
+        const name = prompt("Student name:");
+        if (!name) return;
+        const year = parseInt(
+          prompt("Year (1=Freshman, 2=Sophomore, 3=Junior, 4=Senior):") || "1",
+        );
+        const id = "S" + String(students.length + 1).padStart(3, "0");
+        students.push(makeStudent(id, name.trim(), year, []));
+        render();
+      }
+
+      render();
+    </script>
+  </body>
+</html>

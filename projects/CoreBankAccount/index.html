@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Simple Bank Account — Java 120</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#080b0f;--sur:#0d1117;--br:#1e2d3d;--g:#39d353;--gd:#1a6b28;--cy:#58a6ff;--am:#e3b341;--rd:#f85149;--mu:#484f58;--tx:#c9d1d9;--txd:#6e7681}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh}
+    body::before{content:'';pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);z-index:99}
+    .wrap{max-width:780px;margin:0 auto;padding:44px 20px 80px}
+    nav a{color:var(--txd);font-size:11px;text-decoration:none;letter-spacing:.08em}
+    nav a:hover{color:var(--g)}
+    .badges{display:flex;gap:8px;margin:22px 0 12px;flex-wrap:wrap}
+    .badge{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border-radius:2px;border:1px solid}
+    .bj{color:var(--am);border-color:#4a3b1a;background:rgba(227,179,65,.06)}
+    .bb{color:var(--g);border-color:var(--gd);background:rgba(57,211,83,.06)}
+    .bo{color:var(--cy);border-color:#1f3d5c;background:rgba(88,166,255,.06)}
+    h1{font-size:26px;font-weight:700;color:#e6edf3;letter-spacing:-.02em}
+    .sub{color:var(--txd);font-size:12px;margin:6px 0 30px}
+    .lbl{font-size:10px;color:var(--txd);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+    .lbl::after{content:'';flex:1;height:1px;background:var(--br)}
+    .card{background:var(--sur);border:1px solid var(--br);border-radius:6px;padding:20px;margin-bottom:20px}
+
+    .accs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    @media(max-width:520px){.accs{grid-template-columns:1fr}}
+    .acc-card{background:var(--bg);border:1px solid var(--br);border-radius:4px;padding:14px;cursor:pointer;transition:.15s;position:relative}
+    .acc-card:hover{border-color:var(--gd)}
+    .acc-card.sel{border-color:var(--g);background:rgba(57,211,83,.04)}
+    .acc-name{font-weight:700;color:#e6edf3;font-size:13px;margin-bottom:4px}
+    .acc-id{font-size:10px;color:var(--mu)}
+    .acc-bal{font-size:20px;font-weight:700;color:var(--g);margin-top:8px}
+    .acc-frozen{position:absolute;top:8px;right:8px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--rd);border:1px solid var(--rd);padding:2px 6px;border-radius:2px}
+
+    .acts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+    .act{background:none;border:1px solid var(--br);border-radius:4px;color:var(--txd);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;cursor:pointer;transition:.15s}
+    .act:hover{color:var(--tx);border-color:var(--mu)}
+    .act.primary{color:var(--g);border-color:var(--gd)}
+    .act.danger{color:var(--rd);border-color:#5c1f1f}
+
+    .irow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+    .irow input{background:var(--bg);border:1px solid var(--br);border-radius:4px;color:var(--tx);font-family:inherit;font-size:13px;padding:8px 12px;outline:none;caret-color:var(--g);transition:.15s;width:130px}
+    .irow input:focus{border-color:var(--gd)}
+    .irow select{background:var(--bg);border:1px solid var(--br);border-radius:4px;color:var(--tx);font-family:inherit;font-size:12px;padding:8px 10px;outline:none;cursor:pointer}
+
+    .ledger{width:100%;border-collapse:collapse;font-size:11px}
+    .ledger th{color:var(--mu);font-weight:400;letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--br);text-align:left;white-space:nowrap}
+    .ledger td{padding:7px 8px;border-bottom:1px solid rgba(30,45,61,.5);vertical-align:top}
+    .ledger tr:last-child td{border-bottom:none}
+    .type-d{color:var(--g)}
+    .type-w{color:var(--rd)}
+    .type-to{color:var(--am)}
+    .type-in{color:var(--cy)}
+    .type-o{color:var(--txd)}
+    .amt-plus{color:var(--g)}
+    .amt-minus{color:var(--rd)}
+    .bal-cell{color:var(--tx);font-weight:700}
+    .note-cell{color:var(--mu);font-style:italic;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    .log{background:var(--bg);border:1px solid var(--br);border-radius:4px;padding:12px;max-height:140px;overflow-y:auto;font-size:11px;line-height:1.8}
+    .log-ok{color:var(--g)}
+    .log-err{color:var(--rd)}
+    .log-warn{color:var(--am)}
+    .log-dim{color:var(--mu)}
+
+    pre.run{background:var(--bg);border:1px solid var(--br);border-radius:4px;padding:14px;font-size:12px;line-height:1.8;overflow-x:auto;white-space:pre-wrap}
+    .cmt{color:var(--mu)}.cmd{color:var(--g)}.out{color:var(--am)}
+
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <nav><a href="../../index.html">← All Projects</a></nav>
+
+  <h1>Simple Bank Account</h1>
+  <p class="sub">Encapsulation · checked exceptions · transaction ledger · freeze/transfer</p>
+
+  <div class="lbl">Live Demo</div>
+  <div class="card">
+    <div id="accs" class="accs"></div>
+
+    <div class="acts">
+      <button class="act primary" onclick="doAction('deposit')">Deposit</button>
+      <button class="act"         onclick="doAction('withdraw')">Withdraw</button>
+      <button class="act"         onclick="doAction('transfer')">Transfer</button>
+      <button class="act danger"  onclick="doAction('freeze')">Freeze / Unfreeze</button>
+      <button class="act"         onclick="doAction('new')">+ New Account</button>
+    </div>
+
+    <div class="irow" id="actionRow" style="display:none">
+      <input type="number" id="amount" placeholder="Amount" min="0.01" step="0.01">
+      <input type="text"   id="note"   placeholder="Note (optional)" style="width:160px">
+      <select id="targetSel" style="display:none"></select>
+      <button class="act primary" onclick="confirm_action()">OK</button>
+      <button class="act"         onclick="cancel_action()">Cancel</button>
+    </div>
+
+    <div class="lbl" style="margin-bottom:10px">Transaction Ledger — selected account</div>
+    <div style="overflow-x:auto">
+      <table class="ledger">
+        <thead><tr><th>Type</th><th>Amount</th><th>Balance</th><th>Note</th><th>Time</th></tr></thead>
+        <tbody id="ledger"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="lbl">Console Log</div>
+  <div class="log" id="log"><span class="log-dim">· ready</span></div>
+
+  <div class="lbl" style="margin-top:24px">Compile &amp; Run</div>
+  <pre class="run"><span class="cmt"># compile</span>
+<span class="cmd">cd _projects/bank-account/src
+javac *.java</span>
+
+<span class="cmt"># run full demo</span>
+<span class="cmd">java Main</span>
+
+<span class="out">── 1. Opening Accounts ──────────────────────────────────────
+  ✓ Alice opened:  BankAccount{id='A1B2...', owner='Alice', balance=1000.00, ...}
+  ✓ Bob opened:    BankAccount{id='C3D4...', owner='Bob',   balance=0.00, ...}
+
+── 3. Withdrawals + InsufficientFundsException ─────────────
+  ⚠ Caught InsufficientFundsException:
+  ⚠   Attempted : $500.00
+  ⚠   Available : $200.00
+  ⚠   Shortfall : $300.00
+
+── 5. Full Transaction History / Statement ──────────────────
+  ACCOUNT STATEMENT — EVE  [ID: 7E87...]
+  [2026-04-24 06:31:26]  OPENING       1000.00   Balance:    1000.00
+  [2026-04-24 06:31:26]  DEPOSIT    +   500.00   Balance:    1500.00  (freelance invoice)
+  [2026-04-24 06:31:26]  WITHDRAWAL -   120.00   Balance:    1380.00  (utilities)
+  ...</span></pre>
+</div>
+
+<script>
+let accounts = [], selectedId = null, pendingAction = null;
+
+function uid() { return Math.random().toString(36).slice(2,6).toUpperCase(); }
+function ts()  { return new Date().toLocaleTimeString(); }
+function fmt(n){ return '$'+n.toFixed(2); }
+
+function makeAccount(owner, opening) {
+  return { id: uid(), owner, balance: opening, frozen: false, history: [
+    { type:'OPENING', amount: opening, running: opening, note:'Account opened', time: ts() }
+  ]};
+}
+
+function deposit(acc, amount, note='') {
+  if (acc.frozen)  throw new Error(`Account [${acc.id}] is frozen.`);
+  if (amount <= 0) throw new Error('Deposit amount must be positive.');
+  acc.balance += amount;
+  acc.history.push({ type:'DEPOSIT', amount, running: acc.balance, note, time: ts() });
+}
+
+function withdraw(acc, amount, note='') {
+  if (acc.frozen)   throw new Error(`Account [${acc.id}] is frozen.`);
+  if (amount <= 0)  throw new Error('Withdrawal amount must be positive.');
+  if (amount > 10000) throw new Error('Single withdrawal limit is $10,000.');
+  if (acc.balance - amount < 0)
+    throw new Error(`Insufficient funds: attempted ${fmt(amount)} but only ${fmt(acc.balance)} available. Shortfall: ${fmt(amount - acc.balance)}`);
+  acc.balance -= amount;
+  acc.history.push({ type:'WITHDRAWAL', amount, running: acc.balance, note, time: ts() });
+}
+
+function transfer(from, to, amount) {
+  if (from.frozen) throw new Error(`Account [${from.id}] is frozen.`);
+  if (to.frozen)   throw new Error(`Account [${to.id}] is frozen.`);
+  if (amount <= 0) throw new Error('Transfer amount must be positive.');
+  if (from.balance - amount < 0)
+    throw new Error(`Insufficient funds: attempted ${fmt(amount)} but only ${fmt(from.balance)} available.`);
+  from.balance -= amount;
+  from.history.push({ type:'TRANSFER_OUT', amount, running: from.balance, note: `to ${to.owner} [${to.id}]`, time: ts() });
+  to.balance += amount;
+  to.history.push({ type:'TRANSFER_IN', amount, running: to.balance, note: `from ${from.owner} [${from.id}]`, time: ts() });
+}
+
+function log(msg, cls='log-ok') {
+  const el = document.getElementById('log');
+  el.innerHTML += `<div class="${cls}">· ${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderAccounts() {
+  const c = document.getElementById('accs');
+  if (!accounts.length) { c.innerHTML = '<span style="color:var(--mu);font-size:12px">No accounts yet.</span>'; return; }
+  c.innerHTML = accounts.map(a => `
+    <div class="acc-card${a.id===selectedId?' sel':''}" onclick="select_acc('${a.id}')">
+      ${a.frozen?'<span class="acc-frozen">frozen</span>':''}
+      <div class="acc-name">${a.owner}</div>
+      <div class="acc-id">ID: ${a.id}</div>
+      <div class="acc-bal">${fmt(a.balance)}</div>
+    </div>`).join('');
+}
+
+function renderLedger() {
+  const acc = accounts.find(a => a.id === selectedId);
+  const tb  = document.getElementById('ledger');
+  if (!acc) { tb.innerHTML = '<tr><td colspan="5" style="color:var(--mu);padding:12px">Select an account.</td></tr>'; return; }
+  const typeClass = { DEPOSIT:'type-d', WITHDRAWAL:'type-w', TRANSFER_OUT:'type-to', TRANSFER_IN:'type-in', OPENING:'type-o' };
+  tb.innerHTML = [...acc.history].reverse().map(t => {
+    const plus = t.type==='DEPOSIT'||t.type==='TRANSFER_IN'||t.type==='OPENING';
+    const sign = t.type==='OPENING' ? '' : plus ? '+' : '-';
+    return `<tr>
+      <td class="${typeClass[t.type]||''}">${t.type.replace('_',' ')}</td>
+      <td class="${plus?'amt-plus':'amt-minus'}">${sign}${fmt(t.amount)}</td>
+      <td class="bal-cell">${fmt(t.running)}</td>
+      <td class="note-cell" title="${t.note}">${t.note||'—'}</td>
+      <td style="color:var(--mu);white-space:nowrap">${t.time}</td>
+    </tr>`;
+  }).join('');
+}
+
+function render() { renderAccounts(); renderLedger(); }
+
+function select_acc(id) { selectedId = id; render(); }
+
+function doAction(type) {
+  pendingAction = type;
+  const row = document.getElementById('actionRow');
+  const amt  = document.getElementById('amount');
+  const note = document.getElementById('note');
+  const tsel = document.getElementById('targetSel');
+
+  amt.value = ''; note.value = '';
+
+  if (type === 'new') {
+    const name = prompt('Account owner name:');
+    if (!name) return;
+    const open = parseFloat(prompt('Opening balance:') || '0');
+    if (isNaN(open) || open < 0) { log('Invalid opening balance.', 'log-err'); return; }
+    const a = makeAccount(name.trim(), open);
+    accounts.push(a);
+    selectedId = a.id;
+    log(`Opened account for ${a.owner} with ${fmt(open)} [${a.id}]`);
+    render(); return;
+  }
+
+  if (type === 'freeze') {
+    const acc = accounts.find(a => a.id === selectedId);
+    if (!acc) { log('Select an account first.', 'log-warn'); return; }
+    acc.frozen = !acc.frozen;
+    log(`Account [${acc.id}] ${acc.frozen ? 'frozen' : 'unfrozen'}.`, acc.frozen ? 'log-err' : 'log-ok');
+    render(); return;
+  }
+
+  if (!selectedId) { log('Select an account first.', 'log-warn'); return; }
+
+  if (type === 'transfer') {
+    const others = accounts.filter(a => a.id !== selectedId);
+    if (!others.length) { log('Need at least 2 accounts to transfer.', 'log-warn'); return; }
+    tsel.style.display = '';
+    tsel.innerHTML = others.map(a => `<option value="${a.id}">${a.owner} [${a.id}]</option>`).join('');
+  } else {
+    tsel.style.display = 'none';
+  }
+
+  row.style.display = 'flex';
+  amt.focus();
+}
+
+function confirm_action() {
+  const amt  = parseFloat(document.getElementById('amount').value);
+  const note = document.getElementById('note').value.trim();
+  const tid  = document.getElementById('targetSel').value;
+  const acc  = accounts.find(a => a.id === selectedId);
+
+  if (!acc) { log('No account selected.', 'log-err'); return; }
+  if (isNaN(amt)) { log('Enter a valid amount.', 'log-warn'); return; }
+
+  try {
+    if (pendingAction === 'deposit') {
+      deposit(acc, amt, note);
+      log(`Deposited ${fmt(amt)} to ${acc.owner}${note ? ' ('+note+')' : ''}`);
+    } else if (pendingAction === 'withdraw') {
+      withdraw(acc, amt, note);
+      log(`Withdrew ${fmt(amt)} from ${acc.owner}${note ? ' ('+note+')' : ''}`);
+    } else if (pendingAction === 'transfer') {
+      const target = accounts.find(a => a.id === tid);
+      transfer(acc, target, amt);
+      log(`Transferred ${fmt(amt)} from ${acc.owner} → ${target.owner}`);
+    }
+  } catch(e) {
+    log(e.message, 'log-err');
+  }
+
+  cancel_action();
+  render();
+}
+
+function cancel_action() {
+  document.getElementById('actionRow').style.display = 'none';
+  pendingAction = null;
+}
+
+const alice = makeAccount('Alice', 1000);
+const bob   = makeAccount('Bob', 500);
+try { deposit(alice, 500, 'paycheck'); withdraw(alice, 120, 'utilities'); transfer(alice, bob, 300); } catch(e){}
+accounts = [alice, bob];
+selectedId = alice.id;
+render();
+</script>
+</body>
+</html>
